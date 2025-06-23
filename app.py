@@ -6,7 +6,7 @@ from PIL import Image
 import numpy as np
 import os
 import gdown
-
+from tflite_runtime.interpreter import Interpreter
 app = Flask(__name__)
 
 MODEL_PATH = "model_quantized.tflite"
@@ -21,7 +21,7 @@ if not os.path.exists(MODEL_PATH):
     gdown.download(f"https://drive.google.com/uc?id={GOOGLE_DRIVE_ID}", MODEL_PATH, quiet=False)
 
 # Load TensorFlow Lite model (NOT load_model!)
-interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+interpreter = Interpreter(model_path=MODEL_PATH)
 interpreter.allocate_tensors()
 
 def preprocess_image(img, target_size=(224, 224)):
@@ -65,4 +65,5 @@ def index():
     return render_template("index.html", prediction=prediction, filename=filename)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Fallback to 5000 for local dev
+    app.run(debug=False, host="0.0.0.0", port=port)
