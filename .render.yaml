@@ -1,6 +1,6 @@
 services:
   - type: web
     name: dog-classifier
-    env: python
+    env: python-3.10.12
     buildCommand: ""
     startCommand: gunicorn app:app
