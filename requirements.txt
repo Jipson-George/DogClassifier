@@ -1,6 +1,6 @@
 Flask
 numpy
 Pillow
-tensorflow-cpu
+tensorflow
 gunicorn
 gdown
