@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # 🔥 Replace with your Colab ngrok URL
 
-COLAB_MODEL_URL = os.environ.get("COLAB_MODEL_URL", "https://b2c4-34-150-228-96.ngrok-free.appp")
+COLAB_MODEL_URL = os.environ.get("COLAB_MODEL_URL", "https://ce18-35-221-130-249.ngrok-free.app")
 
 def preprocess_image(image_file):
     """Convert uploaded image to base64"""
@@ -57,7 +57,7 @@ def predict():
             json={'image': image_b64},
             timeout=30
         )
-
+        print(response.status_code)
         if response.status_code == 200:
             result = response.json()
             class_names = ['Dog 🐶', 'Not a Dog ❌']
