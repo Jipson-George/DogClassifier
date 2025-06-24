@@ -20,9 +20,9 @@ Due to local machine constraints, the model was built and trained on **Google Co
 - ⚠️ **Note**: Ngrok generates a new URL every time Colab restarts. To handle this, the model URL is stored in an **environment variable** (`COLAB_MODEL_URL`).
 - This setup is suitable **only for demo purposes**.
 
----
-
-
+--- RUNNING THE APPLICATION LOCALLY
+To run the application on your machine clone the repo from github. install packages in python 3.10. using pip install -r requiremnts.txt. you can get the collab_url from the - https://colab.research.google.com/drive/1ZhribtsgtxE8WnIfLLxHUJ3VBPwVD4Mk?usp=sharing
+link above start the ngrok service if not running may shutdown due to inactivity and copy the public endpoint. use it in the application. run the application using python app.py. 
 ---
 
 ## 📦 Included in Repo
@@ -37,13 +37,12 @@ Due to local machine constraints, the model was built and trained on **Google Co
 
 ## 🔗 Resources
 
-- **Google Colab Notebook**: [Colab Link](#)  
-- **Model Files (Drive)**: [Google Drive Folder](#)  
-- **Deployed Flask UI (Render)**: [Render Public URL](#)  
-- **Ngrok Model Endpoint**: Set as `COLAB_MODEL_URL` env var
+- **Google Colab Notebook**: [https://colab.research.google.com/drive/1ZhribtsgtxE8WnIfLLxHUJ3VBPwVD4Mk?usp=sharing](#)  
+
+- **Model Files (Drive)**: [https://drive.google.com/file/d/1sCEwSqpKNJCGZoLxZuQetLv6Lm9QU4xu/view?usp=drive_link](#)  
+
+- **Deployed Flask UI (Render)**: [https://dogclassifier-z3xt.onrender.com/](#)  
+
 
 > ⚠️ Note: URLs and endpoints may not work permanently due to **Colab/Ngrok session expiry**.
 
-RenderLink - https://dogclassifier-z3xt.onrender.com/
-Model_GoogleDrive-https://drive.google.com/file/d/1sCEwSqpKNJCGZoLxZuQetLv6Lm9QU4xu/view?usp=drive_link
-Model_Hosting_Google_colab- https://colab.research.google.com/drive/1ZhribtsgtxE8WnIfLLxHUJ3VBPwVD4Mk?usp=sharing
