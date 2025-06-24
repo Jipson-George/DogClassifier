@@ -15,7 +15,7 @@ Due to local machine constraints, the model was built and trained on **Google Co
 - Even after quantization, deploying the model within the **Render free tier** led to **CPU runtime crashes**.
 
 ### ✅ Alternative Hosting (Colab + Ngrok)
-- The `.tflite` model is now hosted via a **Flask API on Google Colab**, exposed using **Ngrok**.
+- The `.h5` model is now hosted via a **Flask API on Google Colab**, exposed using **Ngrok**.
 - The frontend Flask app (deployed on Render) sends image data to this Ngrok-powered backend.
 - ⚠️ **Note**: Ngrok generates a new URL every time Colab restarts. To handle this, the model URL is stored in an **environment variable** (`COLAB_MODEL_URL`).
 - This setup is suitable **only for demo purposes**.
@@ -28,9 +28,10 @@ Due to local machine constraints, the model was built and trained on **Google Co
 ## 📦 Included in Repo
 
 - `model_training/`: Colab notebook, `.h5` model, and `.tflite` conversion
-- `web_app/`: Flask UI app with image upload, `/predict` endpoint
-- `sample_dataset/`: Sample dog and not-dog images
+- `app.py/`: Flask UI app with image upload, `/predict` endpoint
+- `dataset/`: Sample dog and not-dog images Zip file
 - `requirements.txt`: Lightweight packages to run the Flask app
+`,render.yaml`: for render building
 
 ---
 
@@ -43,6 +44,6 @@ Due to local machine constraints, the model was built and trained on **Google Co
 
 > ⚠️ Note: URLs and endpoints may not work permanently due to **Colab/Ngrok session expiry**.
 
-RenderLink - https://dogclassifier-z3xt.onrender.com
-GoogleDrive-https://drive.google.com/file/d/1sCEwSqpKNJCGZoLxZuQetLv6Lm9QU4xu/view?usp=drive_link
-Google_colab- https://colab.research.google.com/drive/1ZhribtsgtxE8WnIfLLxHUJ3VBPwVD4Mk?usp=sharing
+RenderLink - https://dogclassifier-z3xt.onrender.com/
+Model_GoogleDrive-https://drive.google.com/file/d/1sCEwSqpKNJCGZoLxZuQetLv6Lm9QU4xu/view?usp=drive_link
+Model_Hosting_Google_colab- https://colab.research.google.com/drive/1ZhribtsgtxE8WnIfLLxHUJ3VBPwVD4Mk?usp=sharing
