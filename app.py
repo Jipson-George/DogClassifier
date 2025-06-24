@@ -1,187 +1,92 @@
-from flask import Flask, request, render_template
+import requests
+import base64
 from PIL import Image
-import numpy as np
+import io
+from flask import Flask, request, jsonify, render_template
 import os
-import hashlib
-import sys
-import platform
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-MODEL_PATH = "model_quantized.tflite"
+# 🔥 Replace with your Colab ngrok URL
 
-# Memory optimization
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+COLAB_MODEL_URL = os.environ.get("COLAB_MODEL_URL", "https://b2c4-34-150-228-96.ngrok-free.appp")
 
-# Global interpreter variable
-interpreter = None
+def preprocess_image(image_file):
+    """Convert uploaded image to base64"""
+    image = Image.open(image_file)
+    
+    # Convert to RGB if needed
+    if image.mode != 'RGB':
+        image = image.convert('RGB')
+    
+    # Convert to bytes
+    buffer = io.BytesIO()
+    image.save(buffer, format='JPEG')
+    image_bytes = buffer.getvalue()
+    
+    # Encode to base64
+    image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+    return image_b64
 
-def get_file_hash(filepath):
-    """Calculate SHA256 hash of a file"""
-    hash_sha256 = hashlib.sha256()
-    with open(filepath, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_sha256.update(chunk)
-    return hash_sha256.hexdigest()
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-def verify_model_file(filepath):
-    """Verify model file integrity"""
-    if not os.path.exists(filepath):
-        return False, "Model file does not exist"
-
-    file_size = os.path.getsize(filepath)
-    if file_size == 0:
-        return False, "Model file is empty"
-
-    if file_size < 1000:
-        return False, f"Model file too small: {file_size} bytes"
-
-    with open(filepath, 'rb') as f:
-        header = f.read(8)
-        if len(header) < 8:
-            return False, "Invalid file header"
-
-    return True, f"Model file appears valid ({file_size} bytes)"
-
-def initialize_interpreter():
-    """Initialize TensorFlow Lite interpreter with error handling"""
-    global interpreter
-
-    if interpreter is not None:
-        return True
-
-    print(f"Python version: {sys.version}")
-    print(f"Platform: {platform.platform()}")
-    print(f"Architecture: {platform.architecture()}")
-
+@app.route('/predict', methods=['POST'])
+def predict():
     try:
-        try:
-            from tflite_runtime.interpreter import Interpreter
-            print("Using tflite_runtime")
-        except ImportError:
-            try:
-                import tensorflow as tf
-                Interpreter = tf.lite.Interpreter
-                print("Using tensorflow.lite")
-            except ImportError:
-                print("Neither tflite_runtime nor tensorflow available")
-                return False
+        if 'file' not in request.files:
+            return render_template('index.html', prediction="No file uploaded")
 
-        is_valid, message = verify_model_file(MODEL_PATH)
-        if not is_valid:
-            print(f"Model file verification failed: {message}")
-            return False
+        file = request.files['file']
+        if file.filename == '':
+            return render_template('index.html', prediction="No file selected")
 
-        print(f"Loading model from: {MODEL_PATH}")
-        print(f"Model file size: {os.path.getsize(MODEL_PATH)} bytes")
+        # Save uploaded file to show in template
+        filename = secure_filename(file.filename)
+        upload_path = os.path.join("static", "uploads", filename)
+        os.makedirs(os.path.dirname(upload_path), exist_ok=True)
+        file.save(upload_path)
 
-        interpreter = Interpreter(model_path=MODEL_PATH)
-        interpreter.allocate_tensors()
+        # Encode for model
+        image_b64 = preprocess_image(open(upload_path, 'rb'))
 
-        input_details = interpreter.get_input_details()
-        output_details = interpreter.get_output_details()
+        response = requests.post(
+            f"{COLAB_MODEL_URL}/predict",
+            json={'image': image_b64},
+            timeout=30
+        )
 
-        print(f"Model loaded successfully!")
-        print(f"Input shape: {input_details[0]['shape']}")
-        print(f"Output shape: {output_details[0]['shape']}")
+        if response.status_code == 200:
+            result = response.json()
+            class_names = ['Dog 🐶', 'Not a Dog ❌']
+            predicted_label = class_names[result['predicted_class']]
+            confidence = f"{result['confidence'] * 100:.2f}%"
+            prediction_text = f"{predicted_label} ({confidence})"
+            return render_template('index.html', prediction=prediction_text, filename=filename)
 
-        return True
-
-    except Exception as e:
-        print(f"Failed to initialize interpreter: {e}")
-        print(f"Error type: {type(e).__name__}")
-        interpreter = None
-        return False
-
-def preprocess_image(img, target_size=(224, 224)):
-    img = img.resize(target_size).convert('RGB')
-    img_array = np.array(img, dtype=np.float32)
-    img_array = np.expand_dims(img_array, axis=0)
-    img_array = img_array / 255.0
-    return img_array
-
-def predict_image(img_array):
-    if interpreter is None:
-        raise RuntimeError("Model not initialized")
-
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-
-    interpreter.set_tensor(input_details[0]['index'], img_array)
-    interpreter.invoke()
-
-    return interpreter.get_tensor(output_details[0]['index'])
-
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-def initialize_app():
-    print("Initializing application...")
-
-    is_valid, message = verify_model_file(MODEL_PATH)
-    if not is_valid:
-        print(f"Model file issue: {message}")
-        return False
-
-    if not initialize_interpreter():
-        print("Failed to initialize model interpreter!")
-        return False
-
-    print("Application initialized successfully!")
-    return True
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    prediction = None
-    filename = None
-    error_message = None
-
-    if request.method == "POST":
-        if interpreter is None:
-            error_message = "Model not available. Please try again later."
         else:
-            file = request.files.get('file')
-            if file and file.filename:
-                try:
-                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-                    file.save(filepath)
+            return render_template('index.html', prediction="Model prediction failed", filename="no file")
 
-                    img = Image.open(filepath)
-                    img_array = preprocess_image(img)
-                    pred = predict_image(img_array)
+    except requests.exceptions.Timeout:
+        return render_template('index.html', prediction="Model server timeout ⏱️")
+    except Exception as e:
+        return render_template('index.html', prediction=f"Error: {str(e)}")
 
-                    prediction = "Dog 🐶" if pred[0][0] < 0.5 else "Not a Dog ❌"
-                    filename = file.filename
 
-                    try:
-                        os.remove(filepath)
-                    except:
-                        pass
 
-                except Exception as e:
-                    error_message = f"Error processing image: {str(e)}"
-                    print(f"Prediction error: {e}")
-            else:
-                error_message = "Please select a file to upload."
+@app.route('/health')
+def health():
+    try:
+        # Check if Colab model is alive
+        response = requests.get(f"{COLAB_MODEL_URL}/health", timeout=10)
+        if response.status_code == 200:
+            return jsonify({'status': 'healthy', 'model_server': 'online'})
+        else:
+            return jsonify({'status': 'degraded', 'model_server': 'offline'}), 503
+    except:
+        return jsonify({'status': 'degraded', 'model_server': 'offline'}), 503
 
-    return render_template("index.html", 
-                         prediction=prediction, 
-                         filename=filename, 
-                         error_message=error_message)
-
-@app.route("/health")
-def health_check():
-    status = "healthy" if interpreter is not None else "unhealthy"
-    return {"status": status, "model_loaded": interpreter is not None}
-
-if __name__ == "__main__":
-    if initialize_app():
-        port = int(os.environ.get("PORT", 5000))
-        app.run(debug=False, host="0.0.0.0", port=port)
-    else:
-        print("Failed to initialize application. Exiting.")
-        sys.exit(1)
-else:
-    if not initialize_app():
-        print("Failed to initialize application during import")
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5001)))

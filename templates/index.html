@@ -55,14 +55,18 @@
 
     <h2>🐶 Dog Classifier</h2>
 
-    <form method="post" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" action="/predict">
+>
         <input type="file" name="file" accept="image/*" required><br>
         <button type="submit">Predict</button>
     </form>
 
     {% if prediction %}
     <div class="result">
-        <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image">
+        {% if filename %}
+<img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded Image">
+{% endif %}
+
         <div class="prediction-text">Prediction: {{ prediction }}</div>
     </div>
     {% endif %}
