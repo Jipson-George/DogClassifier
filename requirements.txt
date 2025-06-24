@@ -3,3 +3,4 @@ numpy
 Pillow
 tflite-runtime
 gunicorn
+requests
