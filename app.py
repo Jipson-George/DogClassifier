@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # 🔥 Replace with your Colab ngrok URL
 
-COLAB_MODEL_URL = os.environ.get("COLAB_MODEL_URL", "https://ce18-35-221-130-249.ngrok-free.app")
+COLAB_MODEL_URL = os.environ.get("COLAB_MODEL_URL")
 
 def preprocess_image(image_file):
     """Convert uploaded image to base64"""
